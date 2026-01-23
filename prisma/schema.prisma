@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum StopType {
+  PHYSICAL
+  DIGITAL
+  TIMED
+  CONDITIONAL
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model User {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String     @unique
+  name               String?
+  avatarUrl          String?    @map("avatar_url")
+  bio                String?
+  website            String?
+  socialLinks        Json?      @map("social_links") @db.JsonB
+  isCreator          Boolean    @default(false) @map("is_creator")
+  stripeAccountId    String?    @map("stripe_account_id")
+  defaultVisibility  Visibility @default(PRIVATE) @map("default_visibility")
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  journeys     Journey[]
+  progress     UserProgress[]
+  purchases    Purchase[]
+
+  @@index([email])
+  @@index([isCreator])
+  @@map("users")
+}
+
+model Journey {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  title            String
+  description      String?
+  coverImage       String?    @map("cover_image")
+  visibility       Visibility @default(PRIVATE)
+  isPublished      Boolean    @default(false) @map("is_published")
+  publishedAt      DateTime?  @map("published_at") @db.Timestamptz
+  isTemplate       Boolean    @default(false) @map("is_template")
+  parentJourneyId  String?    @map("parent_journey_id") @db.Uuid
+  price            Decimal?   @db.Decimal(10, 2)
+  totalSales       Int        @default(0) @map("total_sales")
+  totalRevenue     Decimal    @default(0) @map("total_revenue") @db.Decimal(10, 2)
+  category         String?
+  tags             String[]   @default([])
+  featured         Boolean    @default(false)
+  totalPlays       Int        @default(0) @map("total_plays")
+  totalCompletions Int        @default(0) @map("total_completions")
+  avgRating        Decimal?   @map("avg_rating") @db.Decimal(3, 2)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentJourney   Journey?       @relation("JourneyTemplates", fields: [parentJourneyId], references: [id], onDelete: SetNull)
+  childJourneys   Journey[]      @relation("JourneyTemplates")
+  stops           Stop[]
+  qrCodes         QRCode[]
+  progress        UserProgress[]
+  purchases       Purchase[]
+
+  @@index([userId])
+  @@index([visibility, isPublished])
+  @@index([isTemplate])
+  @@index([parentJourneyId])
+  @@index([category])
+  @@index([featured, isPublished])
+  @@index([tags], type: Gin)
+  @@map("journeys")
+}
+
+model Stop {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journeyId       String   @map("journey_id") @db.Uuid
+  order           Int
+  type            StopType @default(PHYSICAL)
+  title           String
+  message         String?
+  imageUrl        String?  @map("image_url")
+  videoUrl        String?  @map("video_url")
+  audioUrl        String?  @map("audio_url")
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+  radius          Int?     @default(50) // meters
+  unlockAt        DateTime? @map("unlock_at") @db.Timestamptz
+  requiresStopIds String[] @default([]) @map("requires_stop_ids") @db.Uuid
+  requirePhoto    Boolean  @default(false) @map("require_photo")
+  quizData        Json?    @map("quiz_data") @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  journey  Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  qrCode   QRCode?
+  progress UserProgress[]
+
+  @@unique([journeyId, order])
+  @@index([journeyId])
+  @@index([type])
+  @@map("stops")
+}
+
+model QRCode {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String    @unique @default(dbgenerated("encode(gen_random_bytes(8), 'hex')"))
+  journeyId     String    @map("journey_id") @db.Uuid
+  stopId        String    @unique @map("stop_id") @db.Uuid
+  scanCount     Int       @default(0) @map("scan_count")
+  lastScannedAt DateTime? @map("last_scanned_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  stop    Stop    @relation(fields: [stopId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([journeyId])
+  @@map("qr_codes")
+}
+
+model UserProgress {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  journeyId      String   @map("journey_id") @db.Uuid
+  stopId         String   @map("stop_id") @db.Uuid
+  completedAt    DateTime @default(now()) @map("completed_at") @db.Timestamptz
+  scanLatitude   Decimal? @map("scan_latitude") @db.Decimal(10, 8)
+  scanLongitude  Decimal? @map("scan_longitude") @db.Decimal(11, 8)
+  distanceMeters Int?     @map("distance_meters")
+  photoUrls      String[] @default([]) @map("photo_urls")
+  notes          String?
+  scanDevice     String?  @map("scan_device")
+  timeTaken      Int?     @map("time_taken") // seconds from previous stop
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  stop    Stop    @relation(fields: [stopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, journeyId, stopId])
+  @@index([userId])
+  @@index([journeyId])
+  @@index([userId, journeyId])
+  @@map("user_progress")
+}
+
+model Purchase {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  journeyId          String   @map("journey_id") @db.Uuid
+  amountCents        Int      @map("amount_cents")
+  platformFeeCents   Int      @map("platform_fee_cents")
+  creatorPayoutCents Int      @map("creator_payout_cents")
+  stripePaymentId    String?  @unique @map("stripe_payment_id")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, journeyId])
+  @@index([userId])
+  @@index([journeyId])
+  @@index([stripePaymentId])
+  @@map("purchases")
+}
