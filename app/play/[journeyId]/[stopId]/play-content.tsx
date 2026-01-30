@@ -11,6 +11,10 @@ interface PlayContentProps {
   nextStop: { id: string; title: string } | null;
   nextStopQR: string | null;
   userId: string | null;
+  locationRequired: boolean;
+  targetLatitude: number | null;
+  targetLongitude: number | null;
+  radius: number;
 }
 
 export function PlayContent({
@@ -21,6 +25,10 @@ export function PlayContent({
   nextStop,
   nextStopQR,
   userId,
+  locationRequired,
+  targetLatitude,
+  targetLongitude,
+  radius,
 }: PlayContentProps) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
 
@@ -31,6 +39,10 @@ export function PlayContent({
           journeyId={journeyId}
           stopId={stopId}
           onComplete={() => setIsCompleted(true)}
+          locationRequired={locationRequired}
+          targetLatitude={targetLatitude}
+          targetLongitude={targetLongitude}
+          radius={radius}
         />
         {!userId && (
           <p className="text-center text-sm text-gray-500 dark:text-secondary/60">

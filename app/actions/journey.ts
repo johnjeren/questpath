@@ -15,6 +15,9 @@ const StopSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
   audioUrl: z.string().url().optional().or(z.literal("")),
+  latitude: z.string().optional().or(z.literal("")),
+  longitude: z.string().optional().or(z.literal("")),
+  radius: z.string().optional().or(z.literal("")),
 });
 
 const CreateJourneySchema = z.object({
@@ -80,6 +83,9 @@ export async function createJourney(
             imageUrl: stopData.imageUrl || null,
             videoUrl: stopData.videoUrl || null,
             audioUrl: stopData.audioUrl || null,
+            latitude: stopData.latitude ? parseFloat(stopData.latitude) : null,
+            longitude: stopData.longitude ? parseFloat(stopData.longitude) : null,
+            radius: stopData.radius ? parseInt(stopData.radius) : null,
           },
         });
 
@@ -209,6 +215,9 @@ export async function updateJourney(
             imageUrl: stopData.imageUrl || null,
             videoUrl: stopData.videoUrl || null,
             audioUrl: stopData.audioUrl || null,
+            latitude: stopData.latitude ? parseFloat(stopData.latitude) : null,
+            longitude: stopData.longitude ? parseFloat(stopData.longitude) : null,
+            radius: stopData.radius ? parseInt(stopData.radius) : null,
           },
         });
 

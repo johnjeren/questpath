@@ -10,6 +10,9 @@ interface Stop {
   imageUrl: string;
   videoUrl: string;
   audioUrl: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
 }
 
 const emptyStop = (): Stop => ({
@@ -19,6 +22,9 @@ const emptyStop = (): Stop => ({
   imageUrl: "",
   videoUrl: "",
   audioUrl: "",
+  latitude: "",
+  longitude: "",
+  radius: "50",
 });
 
 export default function NewJourneyPage() {
@@ -223,6 +229,65 @@ export default function NewJourneyPage() {
                         className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white text-sm"
                         placeholder="https://example.com/audio.mp3"
                       />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-secondary/80">
+                      Location (Optional - for Physical Stops)
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-secondary/70 mb-1">
+                          Latitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={stop.latitude}
+                          onChange={(e) =>
+                            updateStop(index, "latitude", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white text-sm"
+                          placeholder="40.7128"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-secondary/70 mb-1">
+                          Longitude
+                        </label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={stop.longitude}
+                          onChange={(e) =>
+                            updateStop(index, "longitude", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white text-sm"
+                          placeholder="-74.0060"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-secondary/70 mb-1">
+                        Radius (meters)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={stop.radius}
+                        onChange={(e) =>
+                          updateStop(index, "radius", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white text-sm"
+                        placeholder="50"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-secondary/60 mt-1">
+                        How close users need to be to complete this stop
+                      </p>
                     </div>
                   </div>
 

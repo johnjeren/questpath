@@ -156,6 +156,25 @@ export default async function JourneyDetailPage({ params }: PageProps) {
                       <p className="text-gray-600 dark:text-secondary/80 mb-4">{stop.message}</p>
                     )}
 
+                    {/* Location Info */}
+                    {(stop.latitude && stop.longitude) && (
+                      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-blue-700 dark:text-blue-400">Location Required</p>
+                            <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
+                              {stop.latitude.toString()}, {stop.longitude.toString()}
+                              {stop.radius && ` • ${stop.radius}m radius`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Media Indicators */}
                     {(stop.imageUrl || stop.videoUrl || stop.audioUrl) && (
                       <div className="flex gap-2 mb-4">

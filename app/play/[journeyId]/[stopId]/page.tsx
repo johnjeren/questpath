@@ -144,6 +144,10 @@ export default async function PlayStopPage({ params }: PageProps) {
           nextStop={nextStop ? { id: nextStop.id, title: nextStop.title } : null}
           nextStopQR={nextStopQR}
           userId={userId}
+          locationRequired={!!(currentStop.latitude && currentStop.longitude)}
+          targetLatitude={currentStop.latitude ? parseFloat(currentStop.latitude.toString()) : null}
+          targetLongitude={currentStop.longitude ? parseFloat(currentStop.longitude.toString()) : null}
+          radius={currentStop.radius || 50}
         />
       </div>
     </div>

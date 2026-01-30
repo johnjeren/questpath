@@ -6,7 +6,10 @@ import { getCurrentUserId } from "@/lib/auth";
 
 export async function completeStop(
   journeyId: string,
-  stopId: string
+  stopId: string,
+  userLatitude: number | null = null,
+  userLongitude: number | null = null,
+  distanceMeters: number | null = null
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const userId = await getCurrentUserId();
@@ -39,6 +42,9 @@ export async function completeStop(
         userId,
         journeyId,
         stopId,
+        scanLatitude: userLatitude,
+        scanLongitude: userLongitude,
+        distanceMeters: distanceMeters,
       },
     });
 
