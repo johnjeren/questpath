@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createJourney } from "@/app/actions/journey";
+import { MapPicker } from "@/app/components/map-picker";
 
 interface Stop {
   title: string;
@@ -236,6 +237,16 @@ export default function NewJourneyPage() {
                     <h4 className="text-sm font-medium text-gray-700 dark:text-secondary/80">
                       Location (Optional - for Physical Stops)
                     </h4>
+
+                    {/* Map Picker */}
+                    <MapPicker
+                      latitude={stop.latitude}
+                      longitude={stop.longitude}
+                      onLocationChange={(lat, lng) => {
+                        updateStop(index, "latitude", lat.toString());
+                        updateStop(index, "longitude", lng.toString());
+                      }}
+                    />
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
