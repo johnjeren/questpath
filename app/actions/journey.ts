@@ -12,6 +12,9 @@ const StopSchema = z.object({
   title: z.string().min(1, "Stop title is required"),
   message: z.string().optional(),
   type: z.enum(["PHYSICAL", "DIGITAL"]),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+  videoUrl: z.string().url().optional().or(z.literal("")),
+  audioUrl: z.string().url().optional().or(z.literal("")),
 });
 
 const CreateJourneySchema = z.object({
@@ -74,6 +77,9 @@ export async function createJourney(
             title: stopData.title,
             message: stopData.message || null,
             type: stopData.type as StopType,
+            imageUrl: stopData.imageUrl || null,
+            videoUrl: stopData.videoUrl || null,
+            audioUrl: stopData.audioUrl || null,
           },
         });
 
@@ -100,4 +106,134 @@ export async function createJourney(
   }
 
   redirect("/journeys");
+}
+
+export async function deleteJourney(
+  journeyId: string
+): Promise<{ error: string } | void> {
+  try {
+    const userId = await requireAuth();
+
+    // Verify ownership
+    const journey = await db.journey.findUnique({
+      where: { id: journeyId },
+      select: { userId: true },
+    });
+
+    if (!journey) {
+      return { error: "Journey not found" };
+    }
+
+    if (journey.userId !== userId) {
+      return { error: "Unauthorized" };
+    }
+
+    // Delete journey (cascades to stops, QR codes, etc.)
+    await db.journey.delete({
+      where: { id: journeyId },
+    });
+
+    revalidatePath("/journeys");
+  } catch (error) {
+    console.error("Failed to delete journey:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { error: `Failed to delete journey: ${message}` };
+  }
+
+  redirect("/journeys");
+}
+
+export async function updateJourney(
+  journeyId: string,
+  formData: FormData
+): Promise<{ error: string } | void> {
+  try {
+    const userId = await requireAuth();
+
+    // Verify ownership
+    const existingJourney = await db.journey.findUnique({
+      where: { id: journeyId },
+      select: { userId: true },
+    });
+
+    if (!existingJourney) {
+      return { error: "Journey not found" };
+    }
+
+    if (existingJourney.userId !== userId) {
+      return { error: "Unauthorized" };
+    }
+
+    const rawData = {
+      title: formData.get("title") as string,
+      description: formData.get("description") as string | null,
+      stops: JSON.parse(formData.get("stops") as string) as StopInput[],
+    };
+
+    const validated = CreateJourneySchema.safeParse(rawData);
+
+    if (!validated.success) {
+      const errors = validated.error.flatten().fieldErrors;
+      const message = Object.values(errors).flat().join(", ");
+      return { error: message || "Validation failed" };
+    }
+
+    const { title, description, stops } = validated.data;
+
+    await db.$transaction(async (tx) => {
+      // Update journey details
+      await tx.journey.update({
+        where: { id: journeyId },
+        data: {
+          title,
+          description: description || null,
+        },
+      });
+
+      // Delete all existing stops and QR codes (cascade handles QR codes)
+      await tx.stop.deleteMany({
+        where: { journeyId },
+      });
+
+      // Create new stops and QR codes
+      for (let i = 0; i < stops.length; i++) {
+        const stopData = stops[i];
+
+        const stop = await tx.stop.create({
+          data: {
+            journeyId,
+            order: i,
+            title: stopData.title,
+            message: stopData.message || null,
+            type: stopData.type as StopType,
+            imageUrl: stopData.imageUrl || null,
+            videoUrl: stopData.videoUrl || null,
+            audioUrl: stopData.audioUrl || null,
+          },
+        });
+
+        const code = generateCode();
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const scanUrl = `${baseUrl}/play/${journeyId}/${stop.id}`;
+        await generateQRCode(scanUrl);
+
+        await tx.qRCode.create({
+          data: {
+            code,
+            journeyId,
+            stopId: stop.id,
+          },
+        });
+      }
+    });
+
+    revalidatePath("/journeys");
+    revalidatePath(`/journeys/${journeyId}`);
+  } catch (error) {
+    console.error("Failed to update journey:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { error: `Failed to update journey: ${message}` };
+  }
+
+  redirect(`/journeys/${journeyId}`);
 }

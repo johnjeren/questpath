@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createJourney } from "@/app/actions/journey";
+import { updateJourney } from "@/app/actions/journey";
+import Link from "next/link";
+import type { Journey, Stop } from "@/app/generated/prisma";
 
 interface Stop {
   title: string;
@@ -21,10 +23,27 @@ const emptyStop = (): Stop => ({
   audioUrl: "",
 });
 
-export default function NewJourneyPage() {
+interface EditJourneyFormProps {
+  journey: Journey & { stops: Stop[] };
+}
+
+export function EditJourneyForm({ journey }: EditJourneyFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [stops, setStops] = useState<Stop[]>([emptyStop(), emptyStop()]);
+
+  // Initialize stops from existing journey data
+  const initialStops: Stop[] = journey.stops.map((stop) => ({
+    title: stop.title,
+    message: stop.message || "",
+    type: stop.type === "PHYSICAL" || stop.type === "DIGITAL" ? stop.type : "PHYSICAL",
+    imageUrl: stop.imageUrl || "",
+    videoUrl: stop.videoUrl || "",
+    audioUrl: stop.audioUrl || "",
+  }));
+
+  const [stops, setStops] = useState<Stop[]>(
+    initialStops.length >= 2 ? initialStops : [emptyStop(), emptyStop()]
+  );
 
   const addStop = () => {
     if (stops.length < 10) {
@@ -49,7 +68,7 @@ export default function NewJourneyPage() {
     formData.set("stops", JSON.stringify(stops));
 
     startTransition(async () => {
-      const result = await createJourney(formData);
+      const result = await updateJourney(journey.id, formData);
       if (result?.error) {
         setError(result.error);
       }
@@ -59,8 +78,23 @@ export default function NewJourneyPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-primary py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
+        <Link
+          href={`/journeys/${journey.id}`}
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-secondary/80 hover:text-gray-900 dark:hover:text-white mb-6"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Back to Journey
+        </Link>
+
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-          Create New Journey
+          Edit Journey
         </h1>
 
         <form action={handleSubmit} className="space-y-8">
@@ -87,6 +121,7 @@ export default function NewJourneyPage() {
                 id="title"
                 name="title"
                 required
+                defaultValue={journey.title}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white"
                 placeholder="Enter journey title"
               />
@@ -103,6 +138,7 @@ export default function NewJourneyPage() {
                 id="description"
                 name="description"
                 rows={3}
+                defaultValue={journey.description || ""}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-secondary/30 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:border-highlight dark:focus:border-secondary bg-white dark:bg-primary/80 text-gray-900 dark:text-white"
                 placeholder="Describe your journey (optional)"
               />
@@ -250,13 +286,19 @@ export default function NewJourneyPage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-3">
+            <Link
+              href={`/journeys/${journey.id}`}
+              className="px-6 py-3 bg-gray-100 dark:bg-primary/80 text-gray-700 dark:text-white font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-secondary/10 transition-colors"
+            >
+              Cancel
+            </Link>
             <button
               type="submit"
               disabled={isPending}
               className="px-6 py-3 bg-highlight dark:bg-secondary text-white font-medium rounded-lg hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-highlight dark:focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isPending ? "Creating..." : "Create Journey"}
+              {isPending ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

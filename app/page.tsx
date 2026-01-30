@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-secondary/10 to-white dark:from-primary dark:to-primary/95 flex flex-col items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-secondary/10 to-white dark:from-primary dark:to-primary/95 flex flex-col items-center justify-center px-4">
       <main className="text-center max-w-2xl">
         <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
           Quest<span className="text-highlight dark:text-secondary">Path</span>
@@ -34,7 +34,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="absolute bottom-8 text-gray-400 dark:text-secondary/50 text-sm">
+      <footer className="mt-16 text-gray-400 dark:text-secondary/50 text-sm">
         Built with Next.js, Prisma, and Supabase
       </footer>
     </div>

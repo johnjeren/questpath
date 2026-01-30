@@ -25,7 +25,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -35,7 +35,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
         if (error) {
           setError(error.message);
+        } else if (data.session) {
+          // User was auto-confirmed (email confirmation disabled)
+          window.location.href = redirectTo || "/journeys";
         } else {
+          // Email confirmation required
           setMessage("Check your email for a confirmation link!");
         }
       } else {

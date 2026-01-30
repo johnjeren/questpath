@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { generateQRCode } from "@/lib/qr";
 import { StopType } from "@/app/generated/prisma";
 import { requireAuth } from "@/lib/auth";
+import { DeleteButton } from "./delete-button";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -105,7 +106,18 @@ export default async function JourneyDetailPage({ params }: PageProps) {
         </Link>
 
         <div className="bg-white dark:bg-primary/90 rounded-lg shadow-sm dark:shadow-secondary/20 p-6 mb-8 border border-gray-200 dark:border-secondary/30">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{journey.title}</h1>
+          <div className="flex items-start justify-between mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{journey.title}</h1>
+            <div className="flex gap-2">
+              <Link
+                href={`/journeys/${journey.id}/edit`}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-white bg-gray-100 dark:bg-primary/80 rounded-lg hover:bg-gray-200 dark:hover:bg-secondary/10 transition-colors"
+              >
+                Edit
+              </Link>
+              <DeleteButton journeyId={journey.id} />
+            </div>
+          </div>
           {journey.description && (
             <p className="text-gray-600 dark:text-secondary/80">{journey.description}</p>
           )}
@@ -142,6 +154,36 @@ export default async function JourneyDetailPage({ params }: PageProps) {
 
                     {stop.message && (
                       <p className="text-gray-600 dark:text-secondary/80 mb-4">{stop.message}</p>
+                    )}
+
+                    {/* Media Indicators */}
+                    {(stop.imageUrl || stop.videoUrl || stop.audioUrl) && (
+                      <div className="flex gap-2 mb-4">
+                        {stop.imageUrl && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-xs font-medium rounded">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Image
+                          </span>
+                        )}
+                        {stop.videoUrl && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 text-xs font-medium rounded">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Video
+                          </span>
+                        )}
+                        {stop.audioUrl && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-medium rounded">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                            </svg>
+                            Audio
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {stop.qrCode && (
