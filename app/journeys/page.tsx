@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -15,7 +16,10 @@ function truncate(text: string, length: number): string {
 }
 
 export default async function JourneysPage() {
+  const userId = await requireAuth();
+
   const journeys = await db.journey.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
       _count: {

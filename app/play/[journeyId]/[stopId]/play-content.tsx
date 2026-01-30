@@ -10,6 +10,7 @@ interface PlayContentProps {
   isLastStop: boolean;
   nextStop: { id: string; title: string } | null;
   nextStopQR: string | null;
+  userId: string | null;
 }
 
 export function PlayContent({
@@ -19,16 +20,27 @@ export function PlayContent({
   isLastStop,
   nextStop,
   nextStopQR,
+  userId,
 }: PlayContentProps) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
 
   if (!isCompleted) {
     return (
-      <CompleteButton
-        journeyId={journeyId}
-        stopId={stopId}
-        onComplete={() => setIsCompleted(true)}
-      />
+      <div className="space-y-4">
+        <CompleteButton
+          journeyId={journeyId}
+          stopId={stopId}
+          onComplete={() => setIsCompleted(true)}
+        />
+        {!userId && (
+          <p className="text-center text-sm text-gray-500 dark:text-secondary/60">
+            <a href="/login" className="text-highlight dark:text-secondary hover:underline">
+              Sign in
+            </a>{" "}
+            to track your progress
+          </p>
+        )}
+      </div>
     );
   }
 

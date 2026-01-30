@@ -3,12 +3,11 @@ import { db } from "@/lib/db";
 import { StopType } from "@/app/generated/prisma";
 import { generateQRCode } from "@/lib/qr";
 import { PlayContent } from "./play-content";
+import { getCurrentUserId } from "@/lib/auth";
 
 interface PageProps {
   params: Promise<{ journeyId: string; stopId: string }>;
 }
-
-const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 function StopTypeBadge({ type }: { type: StopType }) {
   const styles = {
@@ -34,6 +33,7 @@ function StopTypeBadge({ type }: { type: StopType }) {
 
 export default async function PlayStopPage({ params }: PageProps) {
   const { journeyId, stopId } = await params;
+  const userId = await getCurrentUserId();
 
   // Fetch journey with all stops
   const journey = await db.journey.findUnique({
@@ -56,16 +56,19 @@ export default async function PlayStopPage({ params }: PageProps) {
     notFound();
   }
 
-  // Check if already completed
-  const existingProgress = await db.userProgress.findUnique({
-    where: {
-      userId_journeyId_stopId: {
-        userId: TEST_USER_ID,
-        journeyId,
-        stopId,
+  // Check if already completed (only if logged in)
+  let existingProgress = null;
+  if (userId) {
+    existingProgress = await db.userProgress.findUnique({
+      where: {
+        userId_journeyId_stopId: {
+          userId,
+          journeyId,
+          stopId,
+        },
       },
-    },
-  });
+    });
+  }
 
   const isCompleted = !!existingProgress;
 
@@ -131,6 +134,7 @@ export default async function PlayStopPage({ params }: PageProps) {
           isLastStop={isLastStop}
           nextStop={nextStop ? { id: nextStop.id, title: nextStop.title } : null}
           nextStopQR={nextStopQR}
+          userId={userId}
         />
       </div>
     </div>

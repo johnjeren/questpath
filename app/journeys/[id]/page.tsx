@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { generateQRCode } from "@/lib/qr";
 import { StopType } from "@/app/generated/prisma";
+import { requireAuth } from "@/lib/auth";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -52,6 +53,7 @@ function DownloadButton({ dataUrl, filename }: { dataUrl: string; filename: stri
 
 export default async function JourneyDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const userId = await requireAuth();
 
   const journey = await db.journey.findUnique({
     where: { id },
@@ -67,6 +69,11 @@ export default async function JourneyDetailPage({ params }: PageProps) {
 
   if (!journey) {
     notFound();
+  }
+
+  // Verify ownership
+  if (journey.userId !== userId) {
+    redirect("/journeys");
   }
 
   // Generate QR codes on-demand for each stop

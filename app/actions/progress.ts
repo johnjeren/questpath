@@ -2,19 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-
-const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
+import { getCurrentUserId } from "@/lib/auth";
 
 export async function completeStop(
   journeyId: string,
   stopId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+      return {
+        success: false,
+        error: "Please sign in to track your progress",
+      };
+    }
+
     // Check if already completed
     const existing = await db.userProgress.findUnique({
       where: {
         userId_journeyId_stopId: {
-          userId: TEST_USER_ID,
+          userId,
           journeyId,
           stopId,
         },
@@ -28,7 +36,7 @@ export async function completeStop(
     // Create progress record
     await db.userProgress.create({
       data: {
-        userId: TEST_USER_ID,
+        userId,
         journeyId,
         stopId,
       },

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { generateQRCode } from "@/lib/qr";
 import { StopType } from "@/app/generated/prisma";
+import { requireAuth } from "@/lib/auth";
 
 const StopSchema = z.object({
   title: z.string().min(1, "Stop title is required"),
@@ -30,13 +31,12 @@ function generateCode(length: number = 6): string {
   return code;
 }
 
-// Hardcoded test user ID (must be valid UUID for Postgres)
-const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
-
 export async function createJourney(
   formData: FormData
 ): Promise<{ error: string } | void> {
   try {
+    const userId = await requireAuth();
+
     const rawData = {
       title: formData.get("title") as string,
       description: formData.get("description") as string | null,
@@ -57,7 +57,7 @@ export async function createJourney(
       // Create the journey
       const journey = await tx.journey.create({
         data: {
-          userId: TEST_USER_ID,
+          userId,
           title,
           description: description || null,
         },
