@@ -28,7 +28,6 @@ export function DeleteButton({ journeyId }: { journeyId: string }) {
           <p className="text-gray-600 dark:text-secondary/80 mb-6">
             This will permanently delete this journey and all its stops. This action cannot be undone.
           </p>
-
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 text-sm rounded-lg">
               {error}
