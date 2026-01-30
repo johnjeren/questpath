@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react";
 import { updateJourney } from "@/app/actions/journey";
 import Link from "next/link";
-import type { Journey, Stop } from "@/app/generated/prisma";
+import type { Journey, Stop as PrismaStop } from "@/app/generated/prisma";
 
-interface Stop {
+interface StopFormData {
   title: string;
   message: string;
   type: "PHYSICAL" | "DIGITAL";
@@ -14,7 +14,7 @@ interface Stop {
   audioUrl: string;
 }
 
-const emptyStop = (): Stop => ({
+const emptyStop = (): StopFormData => ({
   title: "",
   message: "",
   type: "PHYSICAL",
@@ -24,7 +24,7 @@ const emptyStop = (): Stop => ({
 });
 
 interface EditJourneyFormProps {
-  journey: Journey & { stops: Stop[] };
+  journey: Journey & { stops: PrismaStop[] };
 }
 
 export function EditJourneyForm({ journey }: EditJourneyFormProps) {
@@ -32,7 +32,7 @@ export function EditJourneyForm({ journey }: EditJourneyFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Initialize stops from existing journey data
-  const initialStops: Stop[] = journey.stops.map((stop) => ({
+  const initialStops: StopFormData[] = journey.stops.map((stop) => ({
     title: stop.title,
     message: stop.message || "",
     type: stop.type === "PHYSICAL" || stop.type === "DIGITAL" ? stop.type : "PHYSICAL",
@@ -41,7 +41,7 @@ export function EditJourneyForm({ journey }: EditJourneyFormProps) {
     audioUrl: stop.audioUrl || "",
   }));
 
-  const [stops, setStops] = useState<Stop[]>(
+  const [stops, setStops] = useState<StopFormData[]>(
     initialStops.length >= 2 ? initialStops : [emptyStop(), emptyStop()]
   );
 
@@ -57,7 +57,7 @@ export function EditJourneyForm({ journey }: EditJourneyFormProps) {
     }
   };
 
-  const updateStop = (index: number, field: keyof Stop, value: string) => {
+  const updateStop = (index: number, field: keyof StopFormData, value: string) => {
     const updated = [...stops];
     updated[index] = { ...updated[index], [field]: value };
     setStops(updated);
